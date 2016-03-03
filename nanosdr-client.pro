@@ -16,9 +16,15 @@ TARGET = nanosdr-client
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-        mainwindow.cpp
+SOURCES += \
+    main.cpp \
+    mainwindow.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += \
+    mainwindow.h
 
-FORMS    += mainwindow.ui
+FORMS    += \
+    mainwindow.ui
+
+OTHER_FILES += \
+    legal/license-bsd.txt
