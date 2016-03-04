@@ -23,6 +23,10 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+private slots:
+    void on_actionAbout_triggered();
+    void on_actionAboutQt_triggered();
+
 private:
     Ui::MainWindow *ui;
 };
