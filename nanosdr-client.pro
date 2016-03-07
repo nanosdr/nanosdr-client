@@ -18,13 +18,16 @@ TEMPLATE = app
 
 SOURCES += \
     src/main.cpp \
-    src/mainwindow.cpp
+    src/mainwindow.cpp \
+    src/server_dialog.cpp
 
 HEADERS  += \
-    src/mainwindow.h
+    src/mainwindow.h \
+    src/server_dialog.h
 
 FORMS    += \
-    src/mainwindow.ui
+    src/mainwindow.ui \
+    src/server_dialog.ui
 
 OTHER_FILES += \
     legal/license-bsd.txt
