@@ -17,14 +17,14 @@ TEMPLATE = app
 
 
 SOURCES += \
-    main.cpp \
-    mainwindow.cpp
+    src/main.cpp \
+    src/mainwindow.cpp
 
 HEADERS  += \
-    mainwindow.h
+    src/mainwindow.h
 
 FORMS    += \
-    mainwindow.ui
+    src/mainwindow.ui
 
 OTHER_FILES += \
     legal/license-bsd.txt
