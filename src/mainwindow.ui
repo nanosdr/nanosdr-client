@@ -62,10 +62,10 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionConnect">
    <property name="text">
-    <string>Connect to server...</string>
+    <string>New connection...</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+C</string>
+    <string>Ctrl+N</string>
    </property>
   </action>
   <action name="actionQuit">

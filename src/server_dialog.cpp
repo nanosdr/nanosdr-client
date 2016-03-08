@@ -15,6 +15,9 @@ ServerDialog::ServerDialog(QWidget *parent) :
     ui(new Ui::ServerDialog)
 {
     ui->setupUi(this);
+
+    // add example to server combo
+    ui->serverCombo->addItem("example: mysdr.domain.com:42000");
 }
 
 ServerDialog::~ServerDialog()
