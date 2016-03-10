@@ -11,6 +11,8 @@
 
 #include <QMainWindow>
 
+#include "server_dialog.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -24,9 +26,14 @@ public:
     ~MainWindow();
 
 private slots:
+    void on_actionConnect_triggered();
     void on_actionAbout_triggered();
     void on_actionAboutQt_triggered();
 
+    void serverDialog_accepted();
+
 private:
     Ui::MainWindow *ui;
+
+    ServerDialog   *serverDialog;
 };
