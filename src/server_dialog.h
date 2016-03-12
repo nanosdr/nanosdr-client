@@ -23,6 +23,9 @@ public:
     explicit ServerDialog(QWidget *parent = 0);
     ~ServerDialog();
 
+private slots:
+    void on_testButton_clicked();
+
 private:
     Ui::ServerDialog *ui;
 };
