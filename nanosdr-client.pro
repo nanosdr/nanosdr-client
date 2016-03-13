@@ -19,10 +19,12 @@ TEMPLATE = app
 SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
+    src/network/sdr_if.cpp \
     src/server_dialog.cpp
 
 HEADERS  += \
     src/mainwindow.h \
+    src/network/sdr_if.h \
     src/server_dialog.h
 
 FORMS    += \
