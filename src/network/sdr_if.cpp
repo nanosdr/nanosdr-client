@@ -11,11 +11,11 @@
 #include "sdr_if.h"
 
 
-int SdrIf::setup(int iftype, const QString * host, quint16 port)
+int SdrIf::setup(quint8 iftype, QString host, quint16 port)
 {
     if (iftype != SDR_IF_NANOSDR && iftype != SDR_IF_RFSPACE)
         return SDR_IF_EINVAL;
-    if (!host)
+    if (host.isEmpty() || !port)
         return SDR_IF_EINVAL;
 
 

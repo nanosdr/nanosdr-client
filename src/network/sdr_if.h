@@ -38,6 +38,6 @@ public:
      * @retval SDR_IF_OK     The interface has been configured without errors.
      * @retval SDR_IF_EINVAL Invalid parameter.
      */
-    int     setup(int iftype, const QString * host, quint16 port);
+    int     setup(quint8 iftype, QString host, quint16 port);
 
 };
