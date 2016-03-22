@@ -21,3 +21,13 @@ int SdrIf::setup(quint8 iftype, QString host, quint16 port)
 
     return SDR_IF_OK;
 }
+
+int SdrIf::start()
+{
+    return SDR_IF_OK;
+}
+
+int SdrIf::stop()
+{
+    return SDR_IF_OK;
+}
