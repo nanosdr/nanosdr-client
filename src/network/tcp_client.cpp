@@ -15,24 +15,24 @@
 
 //#define TCP_CONNECT_TIMELIMIT 100	//time to wait for connect in 100mSec steps
 
-Tcp::Tcp(QObject * parent)
+TcpClient::TcpClient(QObject * parent)
 {
     Q_UNUSED(parent);
-    tcp_client = 0;
+    tcp_socket = 0;
 }
 
-Tcp::~Tcp()
+TcpClient::~TcpClient()
 {
     cleanupThread();	// signals thread to call "ThreadExit() to clean up resources
 }
 
 /* Called by this worker thread to initialize itself */
-void Tcp::threadInit()
+void TcpClient::threadInit()
 {
-    tcp_client = new QTcpSocket;
+    tcp_socket = new QTcpSocket;
 
-    connect(tcp_client, SIGNAL(readyRead()), this, SLOT(readTcpData()));
-    connect(tcp_client, SIGNAL(stateChanged(QAbstractSocket::SocketState)),
+    connect(tcp_socket, SIGNAL(readyRead()), this, SLOT(readTcpData()));
+    connect(tcp_socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)),
             this, SLOT(tcpStateChanged(QAbstractSocket::SocketState)));
 
     //connect(m_pParent, SIGNAL(ConnectToServerSig() ), this, SLOT( ConnectToServerSlot() ) );
@@ -43,65 +43,65 @@ void Tcp::threadInit()
 }
 
 /* Called by this worker thread to cleanup after itself */
-void Tcp::threadExit()
+void TcpClient::threadExit()
 {
     //DisconnectFromServerSlot();
     disconnect();
-    if (tcp_client)
-        delete tcp_client;
+    if (tcp_socket)
+        delete tcp_socket;
 }
 
-void Tcp::connectToServer()
+void TcpClient::connectToServer()
 {
     emit newSdrStatus(SDR_CONNECTING);
 
-    if ((QAbstractSocket::ConnectingState == tcp_client->state()) ||
-        (QAbstractSocket::HostLookupState == tcp_client->state()))
-        tcp_client->abort();
-    if (QAbstractSocket::ConnectedState == tcp_client->state())
-        tcp_client->close();
+    if ((QAbstractSocket::ConnectingState == tcp_socket->state()) ||
+        (QAbstractSocket::HostLookupState == tcp_socket->state()))
+        tcp_socket->abort();
+    if (QAbstractSocket::ConnectedState == tcp_socket->state())
+        tcp_socket->close();
 
-    qDebug() << "Connecting to Server" << tcp_client->state()
+    qDebug() << "Connecting to Server" << tcp_socket->state()
              << tcp_host << tcp_port;
 
-    tcp_client->connectToHost(tcp_host, tcp_port);
+    tcp_socket->connectToHost(tcp_host, tcp_port);
 }
 
-void Tcp::disconnectFromServer()
+void TcpClient::disconnectFromServer()
 {
-    if( (QAbstractSocket::ConnectedState == tcp_client->state() ) ||
-        (QAbstractSocket::HostLookupState == tcp_client->state() ) ||
-        (QAbstractSocket::ConnectingState == tcp_client->state() ) )
+    if( (QAbstractSocket::ConnectedState == tcp_socket->state() ) ||
+        (QAbstractSocket::HostLookupState == tcp_socket->state() ) ||
+        (QAbstractSocket::ConnectingState == tcp_socket->state() ) )
     {
-        tcp_client->abort();
-        tcp_client->close();
+        tcp_socket->abort();
+        tcp_socket->close();
         qDebug() << "Disconnect from server";
     }
 }
 
-void Tcp::readTcpData()
+void TcpClient::readTcpData()
 {
     quint8      pBuf[50000];
     qint64      n;
 
-    if (QAbstractSocket::ConnectedState == tcp_client->state())
+    if (QAbstractSocket::ConnectedState == tcp_socket->state())
     {
         do
         {
-            n = tcp_client->bytesAvailable();
+            n = tcp_socket->bytesAvailable();
             if ((n < 50000) && n > 0)
             {
-                tcp_client->read((char*)pBuf, 50000);
+                tcp_socket->read((char*)pBuf, 50000);
                 //((CNetio*)m_pParent)->AssembleAscpMsg(pBuf, n);
             }
         } while (n > 0);
     }
 }
 
-void Tcp::sendSlot()
+void TcpClient::sendSlot()
 {
 
-    if (QAbstractSocket::ConnectedState == tcp_client->state())
+    if (QAbstractSocket::ConnectedState == tcp_socket->state())
     {
         tcp_mutex.lock();
         // send data
@@ -109,7 +109,7 @@ void Tcp::sendSlot()
     }
 }
 
-void Tcp::tcpStateChanged(QAbstractSocket::SocketState state)
+void TcpClient::tcpStateChanged(QAbstractSocket::SocketState state)
 {
     qDebug() << state;
 

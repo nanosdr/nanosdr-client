@@ -30,13 +30,13 @@ enum eSdrStatus
 };
 
 
-class Tcp : public ThreadWrapper
+class TcpClient : public ThreadWrapper
 {
 	Q_OBJECT
 
 public:
-    Tcp(QObject *parent = 0);
-    ~Tcp();
+    TcpClient(QObject *parent = 0);
+    ~TcpClient();
 
     QString     tcp_host;
     quint16     tcp_port;
@@ -57,6 +57,6 @@ public slots:
 
 private:
     QMutex          tcp_mutex;
-    QTcpSocket     *tcp_client;
+    QTcpSocket     *tcp_socket;
 };
 
