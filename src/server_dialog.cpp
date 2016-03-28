@@ -9,6 +9,7 @@
  */
 #include <QDebug>
 
+#include "network/sdr_if.h"
 #include "server_dialog.h"
 #include "ui_server_dialog.h"
 
@@ -33,6 +34,13 @@ ServerDialog::~ServerDialog()
 /* Test connection to server */
 void ServerDialog::on_testButton_clicked()
 {
+    SdrIf   test_if;
+
+    if (test_if.testInterface())
+        qDebug("Interface test SUCCESS!");
+    else
+        qDebug("Interface test ERROR!");
+/*
     int     type_idx = ui->serverType->currentIndex();
 
     if (type_idx == SRV_IDX_NANOSDR)
@@ -47,4 +55,5 @@ void ServerDialog::on_testButton_clicked()
     {
         qDebug() << "Unsupported server type";
     }
+*/
 }

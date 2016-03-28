@@ -7,6 +7,7 @@
  * This software is licensed under the terms and conditions of the
  * Simplified BSD License, see legal/license-bsd.txt for details.
  */
+#include <QTcpSocket>
 #include <QThread>
 
 #include "sdr_if.h"
@@ -17,6 +18,7 @@ SdrIf::SdrIf()
     this->moveToThread(worker_thread);
     //connect(worker_thread, SIGNAL(started()), this, SLOT(threadStarted()));
     //connect(worker_thread, SIGNAL(finished()), this, SLOT(threadFinished()));
+    state = SDR_IF_ST_IDLE;
     worker_thread->start();
 }
 
@@ -38,13 +40,27 @@ int SdrIf::setup(quint8 iftype, QString host, quint16 port)
     return SDR_IF_OK;
 }
 
-int SdrIf::startInterface()
+void SdrIf::startInterface()
 {
 
-    return SDR_IF_OK;
 }
 
-int SdrIf::stopInterface()
+void SdrIf::stopInterface()
 {
-    return SDR_IF_OK;
+
+}
+
+bool SdrIf::testInterface()
+{
+    QTcpSocket      socket;
+
+    socket.connectToHost("localhost", 42000);
+    if (socket.waitForConnected(10000))
+    {
+        qDebug("Connected!");
+        socket.disconnectFromHost();
+        return true;
+    }
+
+    return false;
 }
