@@ -10,6 +10,7 @@
 #include <QDebug>
 #include <QMessageBox>
 
+#include "network/sdr_if.h"
 #include "server_dialog.h"
 
 #include "mainwindow.h"
@@ -22,10 +23,13 @@ MainWindow::MainWindow(QWidget *parent) :
     serverDialog(0)
 {
     ui->setupUi(this);
+
+    sdr_if = new SdrIf();
 }
 
 MainWindow::~MainWindow()
 {
+    delete sdr_if;
     delete serverDialog;
     delete ui;
 }

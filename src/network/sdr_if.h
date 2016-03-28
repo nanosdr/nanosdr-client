@@ -9,7 +9,7 @@
  */
 #pragma once
 
-#include <QObject>
+#include <QThread>
 
 // Error codes
 #define SDR_IF_OK       0
@@ -23,12 +23,19 @@
 
 /**
  * @brief Main interface class for handling connections to SDR servers.
+ *
+ * This object creates and runs in its own thread to prevent blocking of the
+ * GUI while waiting for potentially I/O operation to finish. The thread is
+ * created automatically by the constructor and deleted by the destructor.
  */
 class SdrIf : public QObject
 {
     Q_OBJECT
 
 public:
+
+    SdrIf();
+    virtual ~SdrIf();
 
     /**
      * @brief Setup SDR interface.
@@ -38,18 +45,22 @@ public:
      * @retval SDR_IF_OK     The interface has been configured without errors.
      * @retval SDR_IF_EINVAL Invalid parameter.
      */
-    int     setup(quint8 iftype, QString host, quint16 port);
+    int         setup(quint8 iftype, QString host, quint16 port);
 
     /**
      * @brief Connect to server and start streaming data.
      * @return SDR_IF_OK.
      */
-    int     start();
+    int         startInterface();
 
     /**
      * @brief Stop streaming and disconnect from server.
      * @return SDR_IF_OK.
+     * @note Servers will not allow idle connections so we may as well
+     *       disconnect when the streaming is stopped.
      */
-    int     stop();
+    int         stopInterface();
 
+private:
+    QThread    *worker_thread;
 };

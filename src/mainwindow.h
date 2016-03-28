@@ -11,6 +11,7 @@
 
 #include <QMainWindow>
 
+#include "network/sdr_if.h"
 #include "server_dialog.h"
 
 namespace Ui {
@@ -35,5 +36,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
+    SdrIf          *sdr_if;
     ServerDialog   *serverDialog;
 };
