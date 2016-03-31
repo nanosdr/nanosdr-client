@@ -13,21 +13,23 @@
 #include <QThread>
 
 // Error codes
-#define SDR_IF_OK       0
-#define SDR_IF_ERROR   -1
-#define SDR_IF_EBUSY   -2
-#define SDR_IF_EINVAL  -3
+#define SDRIF_OK        0
+#define SDRIF_ERROR    -1
+#define SDRIF_EBUSY    -2
+#define SDRIF_EINVAL   -3
 
-#define SDR_IF_NANOSDR  0
-#define SDR_IF_RFSPACE  1
+#define SDRIF_NANOSDR   0
+#define SDRIF_RFSPACE   1
 
 /** SDR interface states. */
 typedef enum {
-    SDR_IF_ST_UNKNOWN,
-    SDR_IF_ST_IDLE,
-    SDR_IF_ST_ERROR,
-    SDR_IF_ST_CONNECTED,
-    SDR_IF_ST_DISCONNECTED
+    SDRIF_ST_UNKNOWN,
+    SDRIF_ST_IDLE,
+    SDRIF_ST_ERROR,
+    SDRIF_ST_CONNECTING,
+    SDRIF_ST_CONNECTED,
+    SDRIF_ST_DISCONNECTING,
+    SDRIF_ST_DISCONNECTED
 } sdrif_state_t;
 
 /**
@@ -51,8 +53,8 @@ public:
      * @param  iftype The server type.
      * @param  host   IP address or host name of the server.
      * @param  port   The port number where the server is listening.
-     * @retval SDR_IF_OK     The interface has been configured without errors.
-     * @retval SDR_IF_EINVAL Invalid parameter.
+     * @retval SDRIF_OK     The interface has been configured without errors.
+     * @retval SDRIF_EINVAL Invalid parameter.
      */
     int         setup(quint8 iftype, QString host, quint16 port);
 
@@ -81,9 +83,16 @@ public:
 signals:
     void        sdrifStateChanged(sdrif_state_t new_state);
 
+private slots:
+    /**
+     * The state of the TCP client socket has changed.
+     * This slot will run in the TCP worker thread.
+     */
+    void        tcpStateChanged(QAbstractSocket::SocketState new_tcp_state);
+
 private:
     QTcpSocket *tcp_client;
-    QThread    *worker_thread;
+    QThread     worker_thread;      // TCP worker thread
 
     sdrif_state_t   state;
 };
