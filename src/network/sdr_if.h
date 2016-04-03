@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include <QString>
 #include <QTcpSocket>
 #include <QThread>
 
@@ -23,7 +24,6 @@
 
 /** SDR interface states. */
 typedef enum {
-    SDRIF_ST_UNKNOWN,
     SDRIF_ST_IDLE,
     SDRIF_ST_ERROR,
     SDRIF_ST_CONNECTING,
@@ -45,7 +45,7 @@ class SdrIf : public QObject
 
 public:
 
-    SdrIf();
+    explicit SdrIf();
     virtual ~SdrIf();
 
     /**
@@ -56,13 +56,18 @@ public:
      * @retval SDRIF_OK     The interface has been configured without errors.
      * @retval SDRIF_EINVAL Invalid parameter.
      */
-    int         setup(quint8 iftype, QString host, quint16 port);
+    int         setup(quint8 iftype, const QString host, quint16 port);
 
     /**
-     * @brief Connect to server and start streaming data.
+     * @brief Start the interface by connecting to the server.
      *
-     * If server IP/hostname and port number have not been set up using the
-     * @ref setup function, connection will be attempted to localhost:42000.
+     * If server type, IP/hostname or port number have not been configured
+     * using the @ref setup function, default values will be used, namely
+     * nanosdr server type on localhost:42000.
+     *
+     * If the interface state is different from IDLE or DISCONNECTED, i.e. there
+     * is already an active or pending connection, the existing connection will
+     * be terminated and the new connection initiated.
      *
      * Note that this API call will return immediately and not wait for the
      * connection to be established. Success or failure must be monitored by the
@@ -70,15 +75,13 @@ public:
      */
     void        startInterface();
 
-    /**
-     * @brief Stop streaming and disconnect from server.
-     * @note Servers will not allow idle connections, which is why we have to
-     *       disconnect when the streaming is stopped.
-     */
+    /** Stop the interface by disconnecting from the server. */
     void        stopInterface();
 
     /** Test interface. */
     bool        testInterface();
+
+    sdrif_state_t   state() const { return current_state; }
 
 signals:
     void        sdrifStateChanged(sdrif_state_t new_state);
@@ -94,5 +97,18 @@ private:
     QTcpSocket *tcp_client;
     QThread     worker_thread;      // TCP worker thread
 
-    sdrif_state_t   state;
+    sdrif_state_t   current_state;       // the interface state
+
+    // server settings
+    QString     srv_host;
+    quint16     srv_port;
+    quint8      srv_type;
+
+
+    bool        interfaceIsBusy() const
+    {
+        return (current_state == SDRIF_ST_CONNECTING ||
+                current_state == SDRIF_ST_CONNECTED ||
+                current_state == SDRIF_ST_DISCONNECTING);
+    }
 };

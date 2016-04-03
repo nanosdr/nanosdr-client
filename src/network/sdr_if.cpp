@@ -7,14 +7,19 @@
  * This software is licensed under the terms and conditions of the
  * Simplified BSD License, see legal/license-bsd.txt for details.
  */
+#include <QString>
 #include <QTcpSocket>
 #include <QThread>
+
 
 #include "sdr_if.h"
 
 SdrIf::SdrIf()
 {
-    state = SDRIF_ST_IDLE;
+    current_state = SDRIF_ST_IDLE;
+    srv_host = "localhost";
+    srv_port = 42000;
+    srv_type = SDRIF_NANOSDR;
 
     tcp_client = new QTcpSocket;
     this->moveToThread(&worker_thread);
@@ -36,34 +41,49 @@ SdrIf::SdrIf()
 
 SdrIf::~SdrIf()
 {
+    if (interfaceIsBusy())
+        tcp_client->abort();
+
     worker_thread.quit();
     worker_thread.wait();      // FIXME: Use finite timeout?
 }
 
-int SdrIf::setup(quint8 iftype, QString host, quint16 port)
+int SdrIf::setup(quint8 iftype, const QString host, quint16 port)
 {
     if (iftype != SDRIF_NANOSDR && iftype != SDRIF_RFSPACE)
         return SDRIF_EINVAL;
     if (host.isEmpty() || !port)
         return SDRIF_EINVAL;
 
+    srv_host = host;
+    srv_port = port;
+    srv_type = iftype;
 
     return SDRIF_OK;
 }
 
 void SdrIf::startInterface()
 {
+    if (current_state == SDRIF_ST_CONNECTED)
+        tcp_client->close();
+    else if (current_state == SDRIF_ST_CONNECTING ||
+             current_state == SDRIF_ST_DISCONNECTING)
+        tcp_client->abort();
 
+    tcp_client->connectToHost(srv_host, srv_port);
 }
 
 void SdrIf::stopInterface()
 {
-
+    tcp_client->disconnectFromHost();
 }
 
 bool SdrIf::testInterface()
 {
-    tcp_client->connectToHost("localhost", 42000);
+    if (interfaceIsBusy())
+        return false;
+
+    tcp_client->connectToHost(srv_host, srv_port);
     if (tcp_client->waitForConnected(10000))
     {
         tcp_client->disconnectFromHost();
@@ -75,7 +95,7 @@ bool SdrIf::testInterface()
 
 void SdrIf::tcpStateChanged(QAbstractSocket::SocketState new_tcp_state)
 {
-    sdrif_state_t   new_state = state;
+    sdrif_state_t   new_state = current_state;
 
     switch (new_tcp_state)
     {
@@ -97,13 +117,13 @@ void SdrIf::tcpStateChanged(QAbstractSocket::SocketState new_tcp_state)
     case QAbstractSocket::BoundState:
     case QAbstractSocket::ListeningState:
     default:
-        qDebug() << "TCP client entered an unknown state:" << new_tcp_state;
+        qDebug() << "TCP client entered an unexpected state:" << new_tcp_state;
         break;
     }
 
-    if (new_state != state)
+    if (new_state != current_state)
     {
-        state = new_state;
+        current_state = new_state;
         emit sdrifStateChanged(new_state);
     }
 }
