@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QDialog>
+#include <QString>
 
 namespace Ui {
 class ServerDialog;
@@ -22,6 +23,9 @@ class ServerDialog : public QDialog
 public:
     explicit ServerDialog(QWidget *parent = 0);
     ~ServerDialog();
+
+    QString     getHost() const;
+    quint16     getPort() const;
 
 private slots:
     void on_testButton_clicked();
