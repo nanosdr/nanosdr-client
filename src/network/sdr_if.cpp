@@ -31,7 +31,9 @@ SdrIf::SdrIf()
      * Queued connections requiore the parameter types to be registered as meta
      * objects.
      */
+    qRegisterMetaType<sdrif_state_t>("sdrif_state_t");
     qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState");
+
     connect(tcp_client, SIGNAL(stateChanged(QAbstractSocket::SocketState)),
             this, SLOT(tcpStateChanged(QAbstractSocket::SocketState)));
     //connect(worker_thread, SIGNAL(started()), this, SLOT(threadStarted()));
