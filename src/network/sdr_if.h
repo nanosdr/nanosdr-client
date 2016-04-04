@@ -18,6 +18,9 @@
 #define SDRIF_ERROR    -1
 #define SDRIF_EBUSY    -2
 #define SDRIF_EINVAL   -3
+#define SDRIF_ETYPE    -4       // Invalid server type enumerator
+#define SDRIF_EHOST    -5       // Invalid host name or IP address
+#define SDRIF_EPORT    -6       // Invalid port number (e.g. 0)
 
 #define SDRIF_NANOSDR   0
 #define SDRIF_RFSPACE   1
@@ -54,7 +57,10 @@ public:
      * @param  host   IP address or host name of the server.
      * @param  port   The port number where the server is listening.
      * @retval SDRIF_OK     The interface has been configured without errors.
-     * @retval SDRIF_EINVAL Invalid parameter.
+     * @retval SDRIF_ETYPE  Invalid server type.
+     * @retval SDRIF_EHOST  Invalid host name or IP address.
+     * @retval SDRIF_EPORT  Invalid port number (e.g. 0)
+     * @retval SDRIF_EINVAL Other invalid parameter.
      */
     int         setup(quint8 iftype, const QString host, quint16 port);
 

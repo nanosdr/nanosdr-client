@@ -51,9 +51,11 @@ SdrIf::~SdrIf()
 int SdrIf::setup(quint8 iftype, const QString host, quint16 port)
 {
     if (iftype != SDRIF_NANOSDR && iftype != SDRIF_RFSPACE)
-        return SDRIF_EINVAL;
-    if (host.isEmpty() || !port)
-        return SDRIF_EINVAL;
+        return SDRIF_ETYPE;
+    if (host.isEmpty())
+        return SDRIF_EHOST;
+    if (!port)
+        return SDRIF_EPORT;
 
     srv_host = host;
     srv_port = port;
