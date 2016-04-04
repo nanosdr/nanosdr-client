@@ -15,8 +15,6 @@
 #include "server_dialog.h"
 #include "ui_server_dialog.h"
 
-#define SRV_IDX_NANOSDR     0
-#define SRV_IDX_RFSPACE     1
 
 ServerDialog::ServerDialog(QWidget *parent) :
     QDialog(parent),
@@ -26,6 +24,10 @@ ServerDialog::ServerDialog(QWidget *parent) :
 
     // add example to server combo
     ui->serverCombo->addItem("localhost:42000");
+
+    // populate server type combo
+    ui->serverType->addItem("Nanosdr");
+    ui->serverType->addItem("RFSpace");
 }
 
 ServerDialog::~ServerDialog()
@@ -82,4 +84,9 @@ quint16 ServerDialog::getPort() const
     quint16     port = list.at(1).toUInt(&conv_ok, 10);
 
     return conv_ok ? port : 0;
+}
+
+quint8 ServerDialog::getType() const
+{
+    return ui->serverType->currentIndex();
 }

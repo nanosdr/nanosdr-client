@@ -26,6 +26,7 @@ public:
 
     QString     getHost() const;
     quint16     getPort() const;
+    quint8      getType() const;
 
 private slots:
     void on_testButton_clicked();
