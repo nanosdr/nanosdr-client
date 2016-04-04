@@ -30,7 +30,7 @@
     <property name="title">
      <string>&amp;SDR</string>
     </property>
-    <addaction name="actionConnect"/>
+    <addaction name="actionNew"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -60,7 +60,7 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionConnect">
+  <action name="actionNew">
    <property name="text">
     <string>New connection...</string>
    </property>

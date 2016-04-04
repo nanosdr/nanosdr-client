@@ -23,15 +23,18 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit    MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-private slots:
-    void on_actionConnect_triggered();
-    void on_actionAbout_triggered();
-    void on_actionAboutQt_triggered();
+public slots:
+    void        newSdrifState(sdrif_state_t new_state);
 
-    void serverDialog_accepted();
+private slots:
+    void        on_actionNew_triggered();
+    void        on_actionAbout_triggered();
+    void        on_actionAboutQt_triggered();
+
+    void        serverDialog_accepted();
 
 private:
     Ui::MainWindow *ui;
