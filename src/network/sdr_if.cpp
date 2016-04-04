@@ -36,6 +36,8 @@ SdrIf::SdrIf()
 
     connect(tcp_client, SIGNAL(stateChanged(QAbstractSocket::SocketState)),
             this, SLOT(tcpStateChanged(QAbstractSocket::SocketState)));
+    // FIXME: also connect error signals
+
     //connect(worker_thread, SIGNAL(started()), this, SLOT(threadStarted()));
     connect(&worker_thread, SIGNAL(finished()), tcp_client, SLOT(deleteLater()));
     worker_thread.start();
