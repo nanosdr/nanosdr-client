@@ -55,12 +55,16 @@ void MainWindow::newSdrifState(sdrif_state_t new_state)
         break;
     case SDRIF_ST_CONNECTED:
         message = tr("Connected");
+        ui->actionStartSdr->setText(tr("Stop SDR"));
+        ui->actionStartSdr->setToolTip(tr("Stop streaming from the SDR server"));
         break;
     case SDRIF_ST_DISCONNECTING:
         message = tr("Disconnecting from server...");
         break;
     case SDRIF_ST_DISCONNECTED:
         message = tr("Disconnected");
+        ui->actionStartSdr->setText(tr("Start SDR"));
+        ui->actionStartSdr->setToolTip(tr("Start streaming from the SDR server"));
         break;
     default:
         break;
@@ -84,6 +88,14 @@ void MainWindow::on_actionNew_triggered()
     serverDialog->show();
     serverDialog->raise();
     serverDialog->activateWindow();
+}
+
+void MainWindow::on_actionStartSdr_triggered()
+{
+    if (sdr_if->state() == SDRIF_ST_CONNECTED)
+        sdr_if->stopInterface();
+    else
+        sdr_if->startInterface();
 }
 
 void MainWindow::on_actionAbout_triggered()
