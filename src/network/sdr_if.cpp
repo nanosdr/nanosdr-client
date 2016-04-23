@@ -7,6 +7,7 @@
  * This software is licensed under the terms and conditions of the
  * Simplified BSD License, see legal/license-bsd.txt for details.
  */
+#include <QDateTime>
 #include <QString>
 #include <QTcpSocket>
 #include <QThread>
@@ -21,35 +22,46 @@ SdrIf::SdrIf()
     srv_port = 42000;
     srv_type = SDRIF_NANOSDR;
 
-    tcp_client = new QTcpSocket;
+    tcp_client = new QTcpSocket(this);
+    ping_timer = new QTimer(this);
+
+#if 0
     this->moveToThread(&worker_thread);
 
     /* We must use Qt::QueuedConnection to connect signals and slots across
      * threads, however, the default Qt::AutoConnection should be able to figure
      * this out on its own.
      *
-     * Queued connections requiore the parameter types to be registered as meta
+     * Queued connections require the parameter types to be registered as meta
      * objects.
      */
     qRegisterMetaType<sdrif_state_t>("sdrif_state_t");
     qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState");
-
+#endif
     connect(tcp_client, SIGNAL(stateChanged(QAbstractSocket::SocketState)),
             this, SLOT(tcpStateChanged(QAbstractSocket::SocketState)));
+    connect(tcp_client, SIGNAL(readyRead()), this, SLOT(readPacket()));
     // FIXME: also connect error signals
 
+    connect(ping_timer, SIGNAL(timeout()), this, SLOT(pingTimeout()));
+
     //connect(worker_thread, SIGNAL(started()), this, SLOT(threadStarted()));
-    connect(&worker_thread, SIGNAL(finished()), tcp_client, SLOT(deleteLater()));
-    worker_thread.start();
+    //connect(&worker_thread, SIGNAL(finished()), tcp_client, SLOT(deleteLater()));
+    //connect(&worker_thread, SIGNAL(finished()), ping_timer, SLOT(deleteLater()));
+    //worker_thread.start();
 }
 
 SdrIf::~SdrIf()
 {
+    ping_timer->stop();
+    delete ping_timer;
+
     if (interfaceIsBusy())
         tcp_client->abort();
 
-    worker_thread.quit();
-    worker_thread.wait();      // FIXME: Use finite timeout?
+    delete tcp_client;
+    //worker_thread.quit();
+    //worker_thread.wait();      // FIXME: Use finite timeout?
 }
 
 int SdrIf::setup(quint8 iftype, const QString host, quint16 port)
@@ -77,6 +89,7 @@ void SdrIf::startInterface()
         tcp_client->abort();
 
     tcp_client->connectToHost(srv_host, srv_port);
+    tlast_ctl = QDateTime::currentMSecsSinceEpoch();
 }
 
 void SdrIf::stopInterface()
@@ -127,9 +140,88 @@ void SdrIf::tcpStateChanged(QAbstractSocket::SocketState new_tcp_state)
         break;
     }
 
-    if (new_state != current_state)
+    if (new_state == current_state)
+        return;
+
+    current_state = new_state;
+    emit sdrifStateChanged(new_state);
+
+    if (new_state == SDRIF_ST_CONNECTED)
     {
-        current_state = new_state;
-        emit sdrifStateChanged(new_state);
+        if (!ping_timer->isActive())
+            ping_timer->start(5000);
     }
+    else
+        ping_timer->stop();
+}
+
+void SdrIf::readPacket(void)
+{
+    qint64      bytes_read;
+    quint16     pkt_len;
+    quint8      pkt_type;
+    quint8      buffer[8192];  // FIXME
+
+    // we need at least 2 bytes
+    if (tcp_client->bytesAvailable() < 2)
+        return;
+
+    // packet length
+    bytes_read = tcp_client->read((char *)buffer, 2);
+    if (bytes_read != 2)
+        return;
+
+    pkt_len = (quint16)buffer[0] + ((quint16)buffer[1] << 8);
+    if (pkt_len <=2)
+        return;
+
+    // read rest of the packet
+    bytes_read += tcp_client->read((char *)&buffer[2], pkt_len - 2);
+    if (bytes_read != pkt_len)
+        return;
+
+    pkt_type = buffer[3];
+    if (pkt_type == 0)
+    {
+        qint64 tping = (qint64)buffer[4] |
+                       ((qint64)buffer[5] << 8) |
+                       ((qint64)buffer[6] << 16) |
+                       ((qint64)buffer[7] << 24) |
+                       ((qint64)buffer[8] << 32) |
+                       ((qint64)buffer[9] << 40) |
+                       ((qint64)buffer[10] << 48) |
+                       ((qint64)buffer[11] << 56);
+
+        emit newLatency(QDateTime::currentMSecsSinceEpoch() - tping);
+    }
+}
+
+/* Sends periodic keep-alive packets to the server in order keep the
+ * connection active.
+ */
+void SdrIf::pingTimeout(void)
+{
+    quint8      ping_pkt[12] = {
+        0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+    qint64      written;
+    qint64      tnow = QDateTime::currentMSecsSinceEpoch();
+
+    if (tnow - tlast_ctl < 4000)
+        return;
+
+    ping_pkt[4] = tnow & 0xFF;
+    ping_pkt[5] = (tnow >> 8) & 0xFF;
+    ping_pkt[6] = (tnow >> 16) & 0xFF;
+    ping_pkt[7] = (tnow >> 24) & 0xFF;
+    ping_pkt[8] = (tnow >> 32) & 0xFF;
+    ping_pkt[9] = (tnow >> 40) & 0xFF;
+    ping_pkt[10] = (tnow >> 48) & 0xFF;
+    ping_pkt[11] = (tnow >> 56) & 0xFF;
+
+    written = tcp_client->write((char *)ping_pkt, 12);
+    if (written == -1)
+        qDebug() << "Error sending keep-alive packet";
+    else
+        tlast_ctl = tnow;
 }

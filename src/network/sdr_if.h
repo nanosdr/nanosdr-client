@@ -12,6 +12,7 @@
 #include <QString>
 #include <QTcpSocket>
 #include <QThread>
+#include <QTimer>
 
 // Error codes
 #define SDRIF_OK        0
@@ -91,6 +92,7 @@ public:
 
 signals:
     void        sdrifStateChanged(sdrif_state_t new_state);
+    void        newLatency(qint64 msec);
 
 private slots:
     /**
@@ -99,9 +101,16 @@ private slots:
      */
     void        tcpStateChanged(QAbstractSocket::SocketState new_tcp_state);
 
+    /** Read packet from the TCP socket */
+    void        readPacket(void);
+
+    /** Ping timeout, i.e. time to send a keep-aliver packet. */
+    void        pingTimeout(void);
+
 private:
+    QTimer     *ping_timer;
     QTcpSocket *tcp_client;
-    QThread     worker_thread;      // TCP worker thread
+    //QThread     worker_thread;      // TCP worker thread
 
     sdrif_state_t   current_state;       // the interface state
 
@@ -110,6 +119,7 @@ private:
     quint16     srv_port;
     quint8      srv_type;
 
+    qint64      tlast_ctl;
 
     bool        interfaceIsBusy() const
     {
@@ -117,4 +127,6 @@ private:
                 current_state == SDRIF_ST_CONNECTED ||
                 current_state == SDRIF_ST_DISCONNECTING);
     }
+
+    void dumpPacket(char *pkt, int len);
 };

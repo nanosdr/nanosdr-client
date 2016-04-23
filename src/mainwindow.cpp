@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
     sdr_if = new SdrIf();
     connect(sdr_if, SIGNAL(sdrifStateChanged(sdrif_state_t)),
             this, SLOT(newSdrifState(sdrif_state_t)));
+    connect(sdr_if, SIGNAL(newLatency(qint64)), this, SLOT(setLatency(qint64)));
 
     this->statusBar()->showMessage(tr("Idle"));
 }
@@ -146,4 +147,9 @@ void MainWindow::serverDialog_accepted()
                           QMessageBox::Ok);
 
     on_actionNew_triggered();
+}
+
+void MainWindow::setLatency(qint64 msec)
+{
+    qDebug() << "Latency:" << msec << "ms";
 }

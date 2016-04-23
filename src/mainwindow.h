@@ -37,6 +37,8 @@ private slots:
 
     void        serverDialog_accepted();
 
+    void        setLatency(qint64 msec);
+
 private:
     Ui::MainWindow *ui;
 
