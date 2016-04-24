@@ -122,8 +122,6 @@ void SdrIf::tcpStateChanged(QAbstractSocket::SocketState new_tcp_state)
         new_state = SDRIF_ST_DISCONNECTED;
         break;
     case QAbstractSocket::HostLookupState:
-        new_state = SDRIF_ST_CONNECTING;
-        break;
     case QAbstractSocket::ConnectingState:
         new_state = SDRIF_ST_CONNECTING;
         break;
@@ -148,11 +146,16 @@ void SdrIf::tcpStateChanged(QAbstractSocket::SocketState new_tcp_state)
 
     if (new_state == SDRIF_ST_CONNECTED)
     {
+        resetStats();
         if (!ping_timer->isActive())
             ping_timer->start(5000);
     }
     else
+    {
         ping_timer->stop();
+        if (new_state == SDRIF_ST_DISCONNECTED)
+            printStats();
+    }
 }
 
 void SdrIf::readPacket(void)
@@ -178,7 +181,11 @@ void SdrIf::readPacket(void)
     // read rest of the packet
     bytes_read += tcp_client->read((char *)&buffer[2], pkt_len - 2);
     if (bytes_read != pkt_len)
+    {
+        stats.errors++;
         return;
+    }
+    stats.bytes_rx += bytes_read;
 
     pkt_type = buffer[3];
     if (pkt_type == 0)
@@ -204,7 +211,7 @@ void SdrIf::pingTimeout(void)
     quint8      ping_pkt[12] = {
         0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    qint64      written;
+    qint64      bytes_written;
     qint64      tnow = QDateTime::currentMSecsSinceEpoch();
 
     if (tnow - tlast_ctl < 4000)
@@ -219,9 +226,30 @@ void SdrIf::pingTimeout(void)
     ping_pkt[10] = (tnow >> 48) & 0xFF;
     ping_pkt[11] = (tnow >> 56) & 0xFF;
 
-    written = tcp_client->write((char *)ping_pkt, 12);
-    if (written == -1)
+   bytes_written = tcp_client->write((char *)ping_pkt, 12);
+    if (bytes_written == -1)
         qDebug() << "Error sending keep-alive packet";
     else
+    {
         tlast_ctl = tnow;
+        stats.bytes_tx += bytes_written;
+    }
+}
+
+
+void SdrIf::resetStats(void)
+{
+    memset(&stats, 0, sizeof(stats));
+}
+
+void SdrIf::printStats(void)
+{
+    qDebug() << "Network statistics:"
+             << "\n   CTLs sent:" << stats.ctl_tx
+             << "\n   CTLs rcvd:" << stats.ctl_rx
+             << "\n   FFT  rcvd:" << stats.fft_rx
+             << "\n  Audio rcvd:" << stats.audio_rx
+             << "\n  Bytes sent:" << stats.bytes_tx
+             << "\n  Bytes rcvd:" << stats.bytes_rx
+             << "\n      Errors:" << stats.errors;
 }

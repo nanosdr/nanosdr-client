@@ -119,7 +119,7 @@ private:
     quint16     srv_port;
     quint8      srv_type;
 
-    qint64      tlast_ctl;
+    qint64      tlast_ctl;      // Time of last CTL sent to server
 
     bool        interfaceIsBusy() const
     {
@@ -128,5 +128,16 @@ private:
                 current_state == SDRIF_ST_DISCONNECTING);
     }
 
-    void dumpPacket(char *pkt, int len);
+    // Statistics
+    struct {
+        quint64     ctl_tx;         // Control packets sent
+        quint64     ctl_rx;         // Control packets received
+        quint64     fft_rx;         // FFT packets received
+        quint64     audio_rx;       // Audio packets received
+        quint64     bytes_tx;
+        quint64     bytes_rx;
+        quint64     errors;
+    } stats;
+    void resetStats(void);
+    void printStats(void);
 };
