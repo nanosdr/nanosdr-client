@@ -24,6 +24,7 @@ SOURCES += \
 
 HEADERS  += \
     src/mainwindow.h \
+    src/network/nanosdr_protocol.h \
     src/network/sdr_if.h \
     src/server_dialog.h
 

@@ -14,6 +14,8 @@
 #include <QThread>
 #include <QTimer>
 
+#include "nanosdr_protocol.h"
+
 // Error codes
 #define SDRIF_OK        0
 #define SDRIF_ERROR    -1
@@ -119,6 +121,7 @@ private:
     quint16     srv_port;
     quint8      srv_type;
 
+    pkt_t       pkt;            // packet buffer
     qint64      tlast_ctl;      // Time of last CTL sent to server
 
     bool        interfaceIsBusy() const

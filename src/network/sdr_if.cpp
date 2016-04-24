@@ -12,7 +12,7 @@
 #include <QTcpSocket>
 #include <QThread>
 
-
+#include "nanosdr_protocol.h"
 #include "sdr_if.h"
 
 SdrIf::SdrIf()
@@ -161,44 +161,34 @@ void SdrIf::tcpStateChanged(QAbstractSocket::SocketState new_tcp_state)
 void SdrIf::readPacket(void)
 {
     qint64      bytes_read;
-    quint16     pkt_len;
-    quint8      pkt_type;
-    quint8      buffer[8192];  // FIXME
 
     // we need at least 2 bytes
     if (tcp_client->bytesAvailable() < 2)
         return;
 
     // packet length
-    bytes_read = tcp_client->read((char *)buffer, 2);
+    bytes_read = tcp_client->read((char *)pkt.raw, 2);
     if (bytes_read != 2)
         return;
 
-    pkt_len = (quint16)buffer[0] + ((quint16)buffer[1] << 8);
-    if (pkt_len <=2)
+    //pkt.length = (quint16)pkt.raw[0] + ((quint16)pkt.raw[1] << 8);
+    pkt.length = bytes_to_u16(pkt.raw);
+    if (pkt.length <=2)
         return;
 
     // read rest of the packet
-    bytes_read += tcp_client->read((char *)&buffer[2], pkt_len - 2);
-    if (bytes_read != pkt_len)
+    bytes_read += tcp_client->read((char *)&pkt.raw[2], pkt.length - 2);
+    if (bytes_read != pkt.length)
     {
         stats.errors++;
         return;
     }
     stats.bytes_rx += bytes_read;
 
-    pkt_type = buffer[3];
-    if (pkt_type == 0)
+    pkt.type = pkt.raw[3];
+    if (pkt.type == PKT_TYPE_PING)
     {
-        qint64 tping = (qint64)buffer[4] |
-                       ((qint64)buffer[5] << 8) |
-                       ((qint64)buffer[6] << 16) |
-                       ((qint64)buffer[7] << 24) |
-                       ((qint64)buffer[8] << 32) |
-                       ((qint64)buffer[9] << 40) |
-                       ((qint64)buffer[10] << 48) |
-                       ((qint64)buffer[11] << 56);
-
+        qint64  tping = bytes_to_s64((quint8 *)&pkt.raw[4]);
         emit newLatency(QDateTime::currentMSecsSinceEpoch() - tping);
     }
 }
@@ -208,7 +198,7 @@ void SdrIf::readPacket(void)
  */
 void SdrIf::pingTimeout(void)
 {
-    quint8      ping_pkt[12] = {
+    char        ping_pkt[12] = {
         0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
     qint64      bytes_written;
@@ -217,16 +207,8 @@ void SdrIf::pingTimeout(void)
     if (tnow - tlast_ctl < 4000)
         return;
 
-    ping_pkt[4] = tnow & 0xFF;
-    ping_pkt[5] = (tnow >> 8) & 0xFF;
-    ping_pkt[6] = (tnow >> 16) & 0xFF;
-    ping_pkt[7] = (tnow >> 24) & 0xFF;
-    ping_pkt[8] = (tnow >> 32) & 0xFF;
-    ping_pkt[9] = (tnow >> 40) & 0xFF;
-    ping_pkt[10] = (tnow >> 48) & 0xFF;
-    ping_pkt[11] = (tnow >> 56) & 0xFF;
-
-   bytes_written = tcp_client->write((char *)ping_pkt, 12);
+    s64_to_bytes(tnow, (quint8 *)&ping_pkt[4]);
+    bytes_written = tcp_client->write(ping_pkt, 12);
     if (bytes_written == -1)
         qDebug() << "Error sending keep-alive packet";
     else
