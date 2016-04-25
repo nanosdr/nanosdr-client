@@ -131,6 +131,10 @@ private:
                 current_state == SDRIF_ST_DISCONNECTING);
     }
 
+    void        processCtlPacket(void);
+    void        processAudioPacket(void);
+    void        processFftPacket(void);
+
     // Statistics
     struct {
         quint64     ctl_tx;         // Control packets sent

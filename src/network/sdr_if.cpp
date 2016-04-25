@@ -161,6 +161,7 @@ void SdrIf::tcpStateChanged(QAbstractSocket::SocketState new_tcp_state)
 void SdrIf::readPacket(void)
 {
     qint64      bytes_read;
+    qint64      tping;
 
     // we need at least 2 bytes
     if (tcp_client->bytesAvailable() < 2)
@@ -186,12 +187,48 @@ void SdrIf::readPacket(void)
     stats.bytes_rx += bytes_read;
 
     pkt.type = pkt.raw[3];
-    if (pkt.type == PKT_TYPE_PING)
+    switch (pkt.type)
     {
-        qint64  tping = bytes_to_s64((quint8 *)&pkt.raw[4]);
+    case PKT_TYPE_PING:
+        tping = bytes_to_s64((quint8 *)&pkt.raw[4]);
         emit newLatency(QDateTime::currentMSecsSinceEpoch() - tping);
+        break;
+    case PKT_TYPE_SET_CI:
+    case PKT_TYPE_GET_CI:
+    case PKT_TYPE_GET_CI_RNG:
+        processCtlPacket();
+        break;
+    case PKT_TYPE_AUDIO:
+        processAudioPacket();
+        break;
+    case PKT_TYPE_FFT:
+        processFftPacket();
+        break;
+    default:
+        // invalid packet type
+        stats.errors++;
+        break;
     }
 }
+
+/* Process incoming control packets. */
+void SdrIf::processCtlPacket(void)
+{
+
+}
+
+/* Process incoming audio packets. */
+void SdrIf::processAudioPacket(void)
+{
+
+}
+
+/* Process incoming FFT packets. */
+void SdrIf::processFftPacket(void)
+{
+
+}
+
 
 /* Sends periodic keep-alive packets to the server in order keep the
  * connection active.
