@@ -49,6 +49,8 @@ SdrIf::SdrIf()
     //connect(&worker_thread, SIGNAL(finished()), tcp_client, SLOT(deleteLater()));
     //connect(&worker_thread, SIGNAL(finished()), ping_timer, SLOT(deleteLater()));
     //worker_thread.start();
+
+    resetStats();
 }
 
 SdrIf::~SdrIf()
@@ -88,6 +90,7 @@ void SdrIf::startInterface()
              current_state == SDRIF_ST_DISCONNECTING)
         tcp_client->abort();
 
+    resetStats();
     tcp_client->connectToHost(srv_host, srv_port);
     tlast_ctl = QDateTime::currentMSecsSinceEpoch();
 }
@@ -95,6 +98,7 @@ void SdrIf::startInterface()
 void SdrIf::stopInterface()
 {
     tcp_client->disconnectFromHost();
+    printStats();
 }
 
 bool SdrIf::testInterface()
@@ -146,15 +150,12 @@ void SdrIf::tcpStateChanged(QAbstractSocket::SocketState new_tcp_state)
 
     if (new_state == SDRIF_ST_CONNECTED)
     {
-        resetStats();
         if (!ping_timer->isActive())
             ping_timer->start(5000);
     }
     else
     {
         ping_timer->stop();
-        if (new_state == SDRIF_ST_DISCONNECTED)
-            printStats();
     }
 }
 
